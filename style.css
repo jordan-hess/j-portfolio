@@ -1,8 +1,8 @@
 :root {
-    --color-primary: #525CEB;
-    --color-background: #F8EDFF;
-    --color-secondary: #8D9FE7;
-    --color-text: #3D3B40;
+    --color-primary: #F43535;
+    --color-background: #eeeeee;
+    --color-secondary: #aaaaaa;
+    --color-text: #333333;
 }
 
 *{
@@ -79,7 +79,7 @@ body {
 }
 
 .welcome-content h2{
-    color: #525CEB;
+    color: #F43535;
 }
 
 /* Portfolio Popup Styles */
@@ -228,6 +228,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+    cursor: pointer; /* Changes the arrow to a pointing hand */
 }
 
 .contact-item {
@@ -280,4 +281,16 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Typing animation cursor */
+@keyframes blink-cursor {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.typing-h2::after {
+    content: '_';
+    animation: blink-cursor 0.7s step-end infinite;
+    color: var(--color-primary);
 }

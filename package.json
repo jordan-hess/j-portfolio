@@ -1,0 +1,15 @@
+{
+  "name": "3d-room-portfolio",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "start": "vite --host 0.0.0.0 --port 3000"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "animejs": "^4.4.1",
+    "three": "^0.184.0"
+  }
+}
