@@ -122,7 +122,7 @@ const intersectObjectsNames = [
 
 const loader = new GLTFLoader();
 loader.load(
-    "./public/portfolio_room.glb",
+    "/portfolio_room.glb",
     function(glb){
         console.log(intersectObjects);
         const meshColors = {
