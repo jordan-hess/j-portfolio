@@ -92,7 +92,6 @@ body {
 
     box-shadow:
         0 8px 12px rgba(0,0,0,.35);
-
 }
 
 
@@ -130,8 +129,8 @@ body {
         <div class="welcome-content">
             <button id="welcome-exit-button" class="popup-close">&times;</button>
             <div class="popup-body">
-                    <h2>Hello there!</h2>
-                    <p>Welcome. Feel free to click.</p>
+                    <h2>Hello there,</h2>
+                    <p>Welcome. Feel free to click around!</p>
             </div>
         </div>
     </div>
@@ -317,18 +316,18 @@ body {
                     <div class="hobbies-grid">
                         <div class="hobby-card">
                             <div class="hobby-image"><img src="/IMG_4991.PNG" alt="Skateboarding"></div>
-                            <p class="hobby-title">Skateboarding</p>
+                            <p class="hobby-title">Biking</p>
                         </div>
                         <div class="hobby-card">
                             <div class="hobby-image"><img src="/gym.png" alt="Gym"></div>
-                            <p class="hobby-title">Gym</p>
+                            <p class="hobby-title">Gyming</p>
                         </div>
                         <div class="hobby-card">
                             <div class="hobby-image"><img src="/music.png" alt="Music"></div>
                             <p class="hobby-title">Music</p>
                         </div>
                         <div class="hobby-card">
-                            <div class="hobby-image"><img src="/IMG_3642.PNG" alt="Photography"></div>
+                            <div class="hobby-image"><img src="/IMG_3642.PNG" alt="Gaming"></div>
                             <p class="hobby-title">Photography</p>
                         </div>
                     </div>
@@ -383,22 +382,26 @@ body {
     <!--Main Script-->
     <script type="module" src="./main.js"></script>
     <script>
-        anime.set('.name',      { translateY: -300, opacity: 0});
-        anime.set('.aspiring',  { translateX: -950, opacity: 0, translateY: -5, });
-        anime.set('.dev',       { translateX:  800, opacity: 0, rotate: -18  });
+        // Position logo elements off-screen before first paint
+        anime.set('.name',      { translateY: -300, opacity: 0 });
+        anime.set('.aspiring',  { translateX: -950, opacity: 0, translateY: -5 });
+        anime.set('.dev',       { translateX:  800, opacity: 0, rotate: -18 });
 
-        const tl = anime.timeline({ easing: 'easeOutQuart' });
-        tl.add({ targets: '.name',     translateY: 0, opacity: 1, duration: 700 })
-          .add({ targets: '.aspiring', translateX: 0, opacity: 0.8, duration: 700 }, '-=500')
-          .add({ targets: '.dev',      translateX: 0, opacity: 1, duration: 700 }, '-=500')
-          .add({ duration: 1350 })
-          .add({ targets: '.name',     translateY: -300, opacity: 0, duration: 600, easing: 'easeInQuart' })
-          .add({ targets: '.aspiring', translateX: -950, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
-          .add({ targets: '.dev',      translateX:  800, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
-          .finished.then(() => {
-              document.querySelector('.logo').style.display = 'none';
-              document.getElementById('welcome').classList.remove('hidden');
-          });
+        // Called by main.js after the 3D model finishes loading
+        window.startLogoAnimation = function() {
+            anime.timeline({ easing: 'easeOutQuart' })
+                .add({ targets: '.name',     translateY: 0, opacity: 1, duration: 700 })
+                .add({ targets: '.aspiring', translateX: 0, opacity: 0.8, duration: 700 }, '-=500')
+                .add({ targets: '.dev',      translateX: 0, opacity: 1, duration: 700 }, '-=500')
+                .add({ duration: 1350 })
+                .add({ targets: '.name',     translateY: -300, opacity: 0, duration: 600, easing: 'easeInQuart' })
+                .add({ targets: '.aspiring', translateX: -950, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
+                .add({ targets: '.dev',      translateX:  800, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
+                .finished.then(() => {
+                    document.querySelector('.logo').style.display = 'none';
+                    document.getElementById('welcome').classList.remove('hidden');
+                });
+        };
     </script>
 </body>
 </html>

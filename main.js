@@ -21,6 +21,13 @@ const floatText = document.getElementById('float-text');
 const floatTextContent = document.getElementById('float-text-content');
 let floatTextTimeout = null;
 
+const allPopups = [welcome, popup, hobbiesPopup, matPopup, storyPopup];
+
+function closeAllPopups() {
+    allPopups.forEach(p => p.classList.add('hidden'));
+    resetTyping();
+}
+
 // Typing animation — cascade through all popup sections
 const sectionData = Array.from(document.querySelectorAll('#popup .portfolio-section')).map(section => ({
     h2: section.querySelector('h2'),
@@ -96,8 +103,6 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 
 // Load 3D model
-let intersectedObjectName = "";
-let intersectedObject;
 const intersectObjects = [];
 const intersectObjectsNames = [
     "Portfolio",
@@ -124,7 +129,6 @@ const loader = new GLTFLoader();
 loader.load(
     "/portfolio_room.glb",
     function(glb){
-        console.log(intersectObjects);
         const meshColors = {
             "Wall":       0x8892B0,  // light grey wall
             // "Text001":  0xF43535, //HELLO WRLD TXT              
@@ -209,11 +213,12 @@ loader.load(
 
         scene.add(glb.scene);
         setupLights();
-        loading.classList.toggle('hidden');
+        loading.classList.add('hidden');
+        window.startLogoAnimation?.();
     },
     undefined,
     function(error){
-        console.error();
+        console.error(error);
     }
 );
 
@@ -330,7 +335,7 @@ function onResize(){
 window.addEventListener("resize", onResize);
 
 function onMouseMove(event) {
-    if (!popup.classList.contains('hidden')) return;
+    if (allPopups.some(p => !p.classList.contains('hidden'))) return;
     const now = performance.now();
     if (now - lastRaycastTime < 50) return;
     lastRaycastTime = now;
@@ -347,73 +352,68 @@ window.addEventListener('pointermove', onMouseMove);
 
 // Interact with 3D objects
 function onClick(event){
-   // Prevent default touch behavior to avoid scrolling
+   if (allPopups.some(p => !p.classList.contains('hidden'))) return;
+
    event.preventDefault();
 
-   let clientX, clientY;
+   const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+   const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
-   // Check if the event is a touch event
-   if (event.touches) {
-       clientX = event.touches[0].clientX;
-       clientY = event.touches[0].clientY;
-   } else {
-       clientX = event.clientX;
-       clientY = event.clientY;
-   }
-
-   // Get the canvas's position and size
    const rect = canvas.getBoundingClientRect();
-   const x = ((clientX - rect.left) / rect.width) * 2 - 1;
-   const y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-   // Update the raycaster with the current pointer position
-   mouseVec.set(x, y);
+   mouseVec.set(
+       ((clientX - rect.left) / rect.width) * 2 - 1,
+       -((clientY - rect.top) / rect.height) * 2 + 1
+   );
    raycaster.setFromCamera(mouseVec, camera);
 
-   // Find intersections
    const intersects = raycaster.intersectObjects(intersectObjects, true);
+   if (intersects.length === 0) return;
 
-   if (intersects.length > 0) {
-       const intersectedObject = intersects[0].object.parent;
-       const name = intersectedObject.name;
+   const hit = intersects[0].object.parent;
+   const name = hit.name;
 
-       if (name === "Portfolio") {
-           const isOpening = popup.classList.contains("hidden");
-           popup.classList.toggle("hidden");
-           if (isOpening) startTyping(); else resetTyping();
-       } else if (name === "Github") {
-           window.open('https://github.com/jordan-hess', '_blank');
-       } else if (name === "Instagram") {
-           window.open('https://www.instagram.com/jordnhess/', '_blank');
-       } else if (name === "Skateboard") {
-           jumpObject(intersectedObject);
-           hobbiesPopup.classList.remove('hidden');
-       } else if (name === "Mug") {
-           jumpObject(intersectedObject);
-           showFloatText("if you clicked this I probably already had coffee");
-       } else if (name === "Mat") {
-           jumpObject(intersectedObject);
-           matPopup.classList.remove('hidden');
-       } else if (name === "Book") {
-           jumpObject(intersectedObject);
-           storyPopup.classList.remove('hidden');
-       } else if (name === "Chair") {
-           spinObject(intersectedObject);
-           showFloatText("thats my spot.");
-       } else {
-           jumpObject(intersectedObject);
-       }
+   if (name === "Portfolio") {
+       closeAllPopups();
+       popup.classList.remove('hidden');
+       startTyping();
+   } else if (name === "Github") {
+       window.open('https://github.com/jordan-hess', '_blank');
+   } else if (name === "Instagram") {
+       window.open('https://www.instagram.com/jordnhess/', '_blank');
+   } else if (name === "Skateboard") {
+       jumpObject(hit);
+       closeAllPopups();
+       hobbiesPopup.classList.remove('hidden');
+   } else if (name === "Mug") {
+       jumpObject(hit);
+       showFloatText("if you clicked this I probably already had coffee");
+   } else if (name === "Mat") {
+       jumpObject(hit);
+       closeAllPopups();
+       matPopup.classList.remove('hidden');
+   } else if (name === "Book") {
+       jumpObject(hit);
+       closeAllPopups();
+       storyPopup.classList.remove('hidden');
+   } else if (name === "Chair") {
+       spinObject(hit);
+       showFloatText("thats my spot.");
+   } else if (name === "Backpack") {
+       spinObject(hit);
+       showFloatText("Couldn't think of a bag joke");
+   } else {
+       jumpObject(hit);
    }
 }
 window.addEventListener("pointerdown", onClick);
 
 closePopupButton.addEventListener("click", () => {
-    popup.classList.toggle('hidden');
+    popup.classList.add('hidden');
     resetTyping();
 });
 
-closeWelcomeButton.addEventListener("click", () =>{
-    welcome.classList.toggle('hidden');
+closeWelcomeButton.addEventListener("click", () => {
+    welcome.classList.add('hidden');
 });
 
 closeHobbiesButton.addEventListener("click", () => {
