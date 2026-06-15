@@ -294,3 +294,112 @@ body {
     animation: blink-cursor 0.7s step-end infinite;
     color: var(--color-primary);
 }
+
+/* Floating text (Mug + Chair) */
+.float-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    pointer-events: none;
+    text-align: center;
+    font-family: "Bitcount Prop Double", monospace;
+    font-size: 2rem;
+    letter-spacing: 1px;
+    color: var(--color-primary);
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.22);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    max-width: 80vw;
+}
+
+.float-text.visible {
+    opacity: 1;
+}
+
+/* Hobbies popup grid (Skateboard) */
+.hobbies-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.hobby-card {
+    border: 1px solid var(--color-secondary);
+    display: flex;
+    flex-direction: column;
+}
+
+.hobby-image {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+
+.hobby-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hobby-title {
+    padding: 8px 10px;
+    text-align: center;
+    font-family: "Bitcount Prop Double", monospace;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: var(--color-text);
+    border-top: 1px solid var(--color-secondary);
+}
+
+/* Story popup (Book) */
+.story-content {
+    max-width: 480px;
+}
+
+.story-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.story-btn {
+    background: var(--color-primary);
+    color: var(--color-background);
+    border: none;
+    padding: 10px 28px;
+    cursor: pointer;
+    font-family: "Bitcount Prop Double", monospace;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    transition: opacity 0.2s;
+}
+
+.story-btn:hover {
+    opacity: 0.8;
+}
+
+.story-btn-no {
+    background: var(--color-background);
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+}
+
+/* Bitcount font for all new popup headings and text */
+#hobbies-popup h2,
+#mat-popup h2,
+#story-popup h2,
+#story-popup p {
+    font-family: "Bitcount Prop Double", monospace;
+}
+
+@media screen and (max-width: 768px) {
+    .hobbies-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .float-text {
+        font-size: 1.4rem;
+    }
+}

@@ -86,7 +86,7 @@ body {
     align-items: center;
     text-align: center;
 
-    padding: 10px ;
+    padding: 10px;
 
     transform: matrix(0.7071, 0.7071, -0.7071, 0.7071, 0, 0);
 
@@ -131,7 +131,7 @@ body {
             <button id="welcome-exit-button" class="popup-close">&times;</button>
             <div class="popup-body">
                     <h2>Hello there,</h2>
-                    <p>Welcome to Jordan's digital profile.</p>
+                    <p>Welcome to my digital profile.</p>
             </div>
         </div>
     </div>
@@ -141,7 +141,7 @@ body {
 
         <div class="name">
             JORDAN
-            __Hess
+            ___Hess
         </div>
 
         <div class="aspiring">
@@ -168,7 +168,7 @@ body {
                             <p><strong>Username:</strong> JORDAN</p>
                             <p><strong>Age:</strong> 23</p>
                             <p><strong>Nationality:</strong> South African </p>
-                            <p id="bio-text">I'm a 23 year old aspiring developer from Cape Town. I enjoy UI/UX design, gaming and systems programming. I really believe that, one day, I can make a significant impact in the industry as a Frontend developer. I was once asked how badly do i want this? How humgry am I? I'm starving.</p>
+                            <p id="bio-text"> An aspiring developer from Cape Town. I enjoy UI/UX design, gaming and systems programming. I really believe that, one day, I can make a significant impact in the industry as a Frontend developer. I was once asked how badly do i want this? How humgry am I? Well.. I'm starving.</p>
                         </div>
                     </div>
                 </section>
@@ -307,6 +307,68 @@ body {
         </div>
     </div>
 
+    <!--Hobbies Popup (Skateboard)-->
+    <div id="hobbies-popup" class="popup hidden">
+        <div class="popup-content">
+            <button id="hobbies-exit-button" class="popup-close">&times;</button>
+            <div class="popup-body">
+                <section class="portfolio-section">
+                    <h2>Hobbies</h2>
+                    <div class="hobbies-grid">
+                        <div class="hobby-card">
+                            <div class="hobby-image"><img src="./public/IMG_4991.PNG" alt="Skateboarding"></div>
+                            <p class="hobby-title">Skateboarding</p>
+                        </div>
+                        <div class="hobby-card">
+                            <div class="hobby-image"><img src="./public/gym.png" alt="Gym"></div>
+                            <p class="hobby-title">Gym</p>
+                        </div>
+                        <div class="hobby-card">
+                            <div class="hobby-image"><img src="./public/music.png" alt="Music"></div>
+                            <p class="hobby-title">Music</p>
+                        </div>
+                        <div class="hobby-card">
+                            <div class="hobby-image"><img src="./public/IMG_3642.PNG" alt="Photography"></div>
+                            <p class="hobby-title">Photography</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!--Mat Popup (Mi casa su casa)-->
+    <div id="mat-popup" class="welcome hidden">
+        <div class="welcome-content">
+            <button id="mat-exit-button" class="popup-close">&times;</button>
+            <div class="popup-body">
+                <h2>Mi casa su casa</h2>
+            </div>
+        </div>
+    </div>
+
+    <!--Story Popup (Book)-->
+    <div id="story-popup" class="popup hidden">
+        <div class="popup-content story-content">
+            <button id="story-exit-button" class="popup-close">&times;</button>
+            <div class="popup-body">
+                <section class="portfolio-section">
+                    <h2>My Story</h2>
+                    <p>Would you like to read more about my story?</p>
+                    <div class="story-buttons">
+                        <button id="story-yes" class="story-btn">Yes</button>
+                        <button id="story-no" class="story-btn story-btn-no">No</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!--Floating text (Mug + Chair)-->
+    <div id="float-text" class="float-text hidden">
+        <span id="float-text-content"></span>
+    </div>
+
     <!--Import Three.js-->
     <script type="importmap">
         {
@@ -322,17 +384,17 @@ body {
     <script type="module" src="./main.js"></script>
     <script>
         anime.set('.name',      { translateY: -300, opacity: 0});
-        anime.set('.aspiring',  { translateX: -400, opacity: 0 });
-        anime.set('.dev',       { translateX:  400, opacity: 0, rotate: -18  });
+        anime.set('.aspiring',  { translateX: -950, opacity: 0, translateY: -5, });
+        anime.set('.dev',       { translateX:  800, opacity: 0, rotate: -18  });
 
         const tl = anime.timeline({ easing: 'easeOutQuart' });
         tl.add({ targets: '.name',     translateY: 0, opacity: 1, duration: 700 })
           .add({ targets: '.aspiring', translateX: 0, opacity: 0.8, duration: 700 }, '-=500')
           .add({ targets: '.dev',      translateX: 0, opacity: 1, duration: 700 }, '-=500')
-          .add({ duration: 1200 })
+          .add({ duration: 1350 })
           .add({ targets: '.name',     translateY: -300, opacity: 0, duration: 600, easing: 'easeInQuart' })
-          .add({ targets: '.aspiring', translateX: -400, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=400')
-          .add({ targets: '.dev',      translateX:  400, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=400')
+          .add({ targets: '.aspiring', translateX: -950, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
+          .add({ targets: '.dev',      translateX:  800, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
           .finished.then(() => {
               document.querySelector('.logo').style.display = 'none';
               document.getElementById('welcome').classList.remove('hidden');

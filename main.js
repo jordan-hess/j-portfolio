@@ -11,8 +11,18 @@ const loading = document.getElementById('loading');
 const welcome = document.getElementById('welcome');
 const closeWelcomeButton = document.getElementById('welcome-exit-button');
 
+const hobbiesPopup = document.getElementById('hobbies-popup');
+const closeHobbiesButton = document.getElementById('hobbies-exit-button');
+const matPopup = document.getElementById('mat-popup');
+const closeMatButton = document.getElementById('mat-exit-button');
+const storyPopup = document.getElementById('story-popup');
+const closeStoryButton = document.getElementById('story-exit-button');
+const floatText = document.getElementById('float-text');
+const floatTextContent = document.getElementById('float-text-content');
+let floatTextTimeout = null;
+
 // Typing animation — cascade through all popup sections
-const sectionData = Array.from(document.querySelectorAll('.portfolio-section')).map(section => ({
+const sectionData = Array.from(document.querySelectorAll('#popup .portfolio-section')).map(section => ({
     h2: section.querySelector('h2'),
     text: section.querySelector('h2').textContent.trim(),
     content: section.querySelector('h2').nextElementSibling
@@ -144,7 +154,7 @@ loader.load(
             "Cube084_2": 0x000000,
             "Cube084_1": 0xF43535,
             "Cube084": 0xFFFFFF,
-            "Cube004": 0x171717,
+            "Cube004": 0xFFFFFF, //cup
             "Plane029_1": 0x171717,
             "Plane029": 0xFFFFFF, //window
             "Plane022": 0x171717,
@@ -154,7 +164,7 @@ loader.load(
             "Cube073": 0x171717,
             "Cube073_1": 0xF43535,
             "Cube073_2": 0xFFFFFF,
-            "Cube048_1"  : 0x171717, //book
+            "Cube048_1"  : 0x228B22, //book
             "Cube005_3": 0x171717,
             "Cube005_1": 0x228B22,//green rubix
             "Poster": 0xFFFFFF,
@@ -289,11 +299,23 @@ function jumpObject(object) {
 }
 
 function spinObject(object) {
-    gsap.to(object.rotation, { 
-        y: object.rotation.y + Math.PI * 2, 
-        duration: 1, 
-        ease: "power2.inOut" 
+    gsap.to(object.rotation, {
+        y: object.rotation.y + Math.PI * 2,
+        duration: 1,
+        ease: "power2.inOut"
     });
+}
+
+function showFloatText(message) {
+    floatTextContent.textContent = message;
+    floatText.classList.remove('hidden');
+    floatText.getBoundingClientRect(); // force reflow so transition fires
+    floatText.classList.add('visible');
+    clearTimeout(floatTextTimeout);
+    floatTextTimeout = setTimeout(() => {
+        floatText.classList.remove('visible');
+        setTimeout(() => floatText.classList.add('hidden'), 600);
+    }, 3000);
 }
 
 // Resize canvas responsively
@@ -363,8 +385,21 @@ function onClick(event){
            window.open('https://github.com/jordan-hess', '_blank');
        } else if (name === "Instagram") {
            window.open('https://www.instagram.com/jordnhess/', '_blank');
+       } else if (name === "Skateboard") {
+           jumpObject(intersectedObject);
+           hobbiesPopup.classList.remove('hidden');
+       } else if (name === "Mug") {
+           jumpObject(intersectedObject);
+           showFloatText("if you clicked this I probably already had coffee");
+       } else if (name === "Mat") {
+           jumpObject(intersectedObject);
+           matPopup.classList.remove('hidden');
+       } else if (name === "Book") {
+           jumpObject(intersectedObject);
+           storyPopup.classList.remove('hidden');
        } else if (name === "Chair") {
            spinObject(intersectedObject);
+           showFloatText("thats my spot.");
        } else {
            jumpObject(intersectedObject);
        }
@@ -379,6 +414,37 @@ closePopupButton.addEventListener("click", () => {
 
 closeWelcomeButton.addEventListener("click", () =>{
     welcome.classList.toggle('hidden');
+});
+
+closeHobbiesButton.addEventListener("click", () => {
+    hobbiesPopup.classList.add('hidden');
+});
+
+closeMatButton.addEventListener("click", () => {
+    matPopup.classList.add('hidden');
+});
+
+closeStoryButton.addEventListener("click", () => {
+    storyPopup.classList.add('hidden');
+});
+
+document.getElementById('story-yes').addEventListener("click", () => {
+    window.open('https://lifechoices.co.za/jordan-hess/', '_blank');
+    storyPopup.classList.add('hidden');
+});
+
+document.getElementById('story-no').addEventListener("click", () => {
+    storyPopup.classList.add('hidden');
+});
+
+// Click outside any popup overlay to close it
+[welcome, popup, hobbiesPopup, matPopup, storyPopup].forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            if (overlay === popup) resetTyping();
+            overlay.classList.add('hidden');
+        }
+    });
 });
 
 // Animation Loop
