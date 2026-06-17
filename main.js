@@ -138,8 +138,8 @@ loader.load(
             "Mousepad":  0xF43535,  // Red
             "Plane001":  0x171717,   // black top
             "FloorPlanks":    0x8892B0,   // light grey floor
-            "Plane002":  0x171717,   // black
-            "Plane003" :  0x8892B0,   // dark grey left
+            "Plane002":  0x171717,   // black floor
+            "Plane003" :  0x8892B0,   // BackWalls
             "Drawer020": 0x8892B0,   // 
             "Drawer021": 0x8892B0,   // 
             "Drawer022": 0x8892B0,   //
@@ -167,8 +167,9 @@ loader.load(
             "Plane023": 0x171717,
             "Cube073": 0x171717,
             "Cube073_1": 0xF43535,
-            "Cube073_2": 0xFFFFFF,
+            "Cube073_2": 0xFFFFFF, //backpack
             "Cube048_1"  : 0x228B22, //book
+            "Cube048": 0x171717, //book pages
             "Cube005_3": 0x171717,
             "Cube005_1": 0x228B22,//green rubix
             "Poster": 0xFFFFFF,
@@ -180,6 +181,7 @@ loader.load(
 
             
         };
+        console.log(intersectObjects);
 
         const hsl = {};
         glb.scene.traverse(child => {
