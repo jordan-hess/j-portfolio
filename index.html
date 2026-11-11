@@ -2,32 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Jordan's Room</title>
+    <meta name="description" content="Jordan Hess, a junior developer from Cape Town. Explore an interactive 3D room to find my projects, skills, experience and CV.">
+    <meta name="theme-color" content="#171717">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Jordan's Room | Jordan Hess, Junior Developer">
+    <meta property="og:description" content="An interactive 3D room portfolio. Click around to find my projects, skills and CV.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Birthstone&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Pixelify+Sans:wght@400..700&family=Sono:wght@200&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Birthstone&family=Bitcount+Prop+Double:wght@400&family=Jersey+15&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
-    <title>Jordans Room!</title>
-    
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bitcount+Prop+Double:wght@400&display=swap');
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #a7a7a7;
-}
-
-
+/* Intro logo (kept inline so it paints before the stylesheet's heavier rules) */
 .logo {
     position: fixed;
     top: 50%;
@@ -39,8 +28,6 @@ body {
     pointer-events: none;
 }
 
-
-/* Jordan Hess */
 .name {
     position: absolute;
     top: 15px;
@@ -52,13 +39,6 @@ body {
     letter-spacing: -3px;
 }
 
-.name span {
-    display: block;
-    margin-left: 90px;
-}
-
-
-/* Aspiring */
 .aspiring {
     position: absolute;
     top: 120px;
@@ -70,313 +50,335 @@ body {
     transform: rotate(-5deg);
 }
 
-
-/* Developer stamp */
 .dev {
     position: absolute;
     top: 80px;
     right: 25px;
-
     background: #ff2b2b;
-    color:white;
-
+    color: white;
     font-family: "Bitcount Prop Double", monospace;
     font-size: 25px;
     letter-spacing: 2px;
-    align-items: center;
     text-align: center;
-
     padding: 10px;
-
     transform: matrix(0.7071, 0.7071, -0.7071, 0.7071, 0, 0);
-
-    box-shadow:
-        0 8px 12px rgba(0,0,0,.35);
+    box-shadow: 0 8px 12px rgba(0,0,0,.35);
 }
 
-
-/* slight worn stamp effect */
 .dev::before {
-    content:"";
-    position:absolute;
-    inset:0;
-    background:
-    repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 3px,
-        rgba(255,255,255,.08) 4px
-    );
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,255,255,.08) 4px);
 }
-
 </style>
 
 </head>
 <body>
     <!--Three.js canvas-->
     <div class="portfolio">
-        <canvas id="portfolio-canvas"></canvas>
+        <canvas id="portfolio-canvas" aria-label="Interactive 3D room. Click objects to explore."></canvas>
     </div>
 
     <!--Loading screen-->
     <div id="loading" class="loading">
         <h2>Loading...</h2>
         <p>Please be patient: this entire webpage is powered by a man on a mission!</p>
+        <div class="progress" role="progressbar" aria-label="Loading the room" aria-valuemin="0" aria-valuemax="100">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <p id="progress-label" class="progress-label">0%</p>
     </div>
 
-    <!--Welcome message-->
-    <div id="welcome" class="welcome hidden">
-        <div class="welcome-content">
-            <button id="welcome-exit-button" class="popup-close">&times;</button>
-            <div class="popup-body">
-                    <h2>Hello there,</h2>
-                    <p>Welcome. Feel free to click around!</p>
-            </div>
+    <!--Hotbar (quick links for visitors who don't explore the room)-->
+    <nav id="quick-nav" class="hotbar hidden" aria-label="Quick links">
+        <button type="button" class="slot" data-section="about-me">
+            <kbd>1</kbd>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2h4v5H6zM3 9h10v5H3z"/></svg>
+            <span>About</span>
+        </button>
+        <button type="button" class="slot" data-section="projects">
+            <kbd>2</kbd>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h5l1 2h8v9H1z"/></svg>
+            <span>Projects</span>
+        </button>
+        <button type="button" class="slot" data-section="contact">
+            <kbd>3</kbd>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v10H1zM3 5v1l5 3 5-3V5L8 8z" fill-rule="evenodd"/></svg>
+            <span>Contact</span>
+        </button>
+        <a class="slot slot-cv" href="/JordanHess-CV.pdf" download>
+            <kbd>4</kbd>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1h10v14H3zM7 4v5H5l3 3 3-3H9V4z" fill-rule="evenodd"/></svg>
+            <span>CV</span>
+        </a>
+    </nav>
+
+    <!--Welcome: poster carrying the intro logo-->
+    <div id="welcome" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+        <div class="poster panel">
+            <button id="welcome-exit-button" class="popup-close" aria-label="Close">&times;</button>
+            <h2 id="welcome-title">Hey, I'm Jordan.</h2>
+            <p class="poster-lede">A junior developer in Cape Town. Welcome to my room. Click things.</p>
+            <ul class="poster-guide">
+                <li><span class="swatch swatch-red"></span><span>The <strong>Portfolio sign</strong> opens my CV and projects</span></li>
+                <li><span class="swatch swatch-red"></span><span>The <strong>skateboard</strong> shows my hobbies</span></li>
+                <li><span class="swatch swatch-green"></span><span>The green <strong>book</strong> tells my story</span></li>
+            </ul>
+            <p class="poster-hint">Drag to look around, or use the bar at the bottom of the screen.</p>
+            <button id="welcome-go" class="btn btn-ink">Start exploring</button>
         </div>
     </div>
 
 
     <div class="logo">
-
         <div class="name">
             JORDAN
             ___Hess
         </div>
-
         <div class="aspiring">
             Aspiring
         </div>
-
-
         <div class="dev">
             DEVELOPER
         </div>
-
     </div>
 
-    <!--Portfolio Popup-->
-    <div id="popup" class="popup hidden">
-        <div class="popup-content">
-            <button id="popup-exit-button" class="popup-close">&times;</button>
-            <div class="popup-body">
-                <!-- About Me Section -->
-                <section class="portfolio-section" id="about-me">
-                    <h2>About Me</h2>
-                    <div class="about-me-content">
-                        <div class="personal-info">
-                            <p><strong>Username:</strong> JORDAN</p>
-                            <p><strong>Age:</strong> 23</p>
-                            <p><strong>Nationality:</strong> South African </p>
-                            <p id="bio-text"> An aspiring developer from Cape Town. I enjoy UI/UX design, gaming and systems programming. I really believe that, one day, I can make a significant impact in the industry as a Frontend developer. I was once asked how badly do i want this? How humgry am I? Well.. I'm starving.</p>
-                        </div>
-                    </div>
-                </section>
-    
-                <!-- Skills Section -->
-                <section class="portfolio-section" id="skills">
-                    <h2>Technical Skills</h2>
-                    <div class="skills-content">
-                        <div class="skill-category">
-                            <h3>Programming Languages</h3>
-                            <ul>
-                                <li>Javascript</li>
-                                <li>HTML</li>
-                                <li>CSS</li>
-                                <li>Python</li>
-                                <li>Next.js</li>
-                                <li>React</li>
-                                <li>SQL</li>
-                            </ul>
-                        </div>
-                        <div class="skill-category">
-                            <h3>APIs, libraries and frameworks</h3>
-                            <ul>
-                                <li>Node.js</li>
-                                <li>Anime.js</li>
-                                <li>Three.js</li>
-                                <li>Figma</li>
-                            </ul>
-                        </div>
-                        <div class="skill-category">
-                            <h3>Software and tools</h3>
-                            <ul>
-                                <li>Visual Studio Code</li>
-                                <li>Git/Github</li>
-                                <li>Blender</li>
-                                <li>Claude</li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Education Section -->
-                <section class="portfolio-section" id="education">
-                    <h2>Education</h2>
-                    <div class="education-list">
-                        <div class="education-item">
-                            <h3>High School Diploma</h3>
-                            <p><strong>Groenvlei High School</strong> | 2015 - 2020</p>
-                        </div>
-                    </div>
-                </section>
-    
-                <!-- Work Experience Section -->
-                <section class="portfolio-section" id="work-experience">
-                    <h2>Work Experience</h2>
-                    <div class="experience-list">
-                        <div class="experience-item">
-                            <h3>Aspiring Developer</h3>
-                            <p><strong>[SECRET COMPANY]</strong> | Feb 2021 - Oct 2021</p>
-                            <ul>
-                                <li>Built a foundation in web development, found that i have an eye for design which led to frontend development being my passion.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-    
-                <!-- Projects Section -->
-                <section class="portfolio-section" id="projects">
-                    <h2>Projects</h2>
-                    <div class="project-grid">
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="/Screenshot 2026-06-13 163149.png" alt="Project 1">
+    <!--Portfolio: the desk monitor-->
+    <div id="popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="monitor-title">
+        <div class="monitor panel">
+            <div class="monitor-screen">
+                <div class="monitor-titlebar">
+                    <span id="monitor-title">Jordan Hess / portfolio</span>
+                    <button id="popup-exit-button" class="popup-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="monitor-body">
+                    <nav class="popup-tabs" aria-label="Portfolio sections">
+                        <button type="button" data-section="about-me">About</button>
+                        <button type="button" data-section="skills">Skills</button>
+                        <button type="button" data-section="work-experience">Experience</button>
+                        <button type="button" data-section="education">Education</button>
+                        <button type="button" data-section="projects">Projects</button>
+                        <button type="button" data-section="contact">Contact</button>
+                    </nav>
+                    <div class="monitor-content">
+                        <!-- About -->
+                        <section class="portfolio-section" id="about-me">
+                            <h2>About me</h2>
+                            <div class="about">
+                                <p class="about-bio">An aspiring developer from Cape Town. I enjoy UI/UX design, gaming and systems programming. I really believe that, one day, I can make a significant impact in the industry as a Frontend developer. I was once asked how badly do I want this? How hungry am I? Well... I'm starving.</p>
+                                <dl class="spec">
+                                    <div><dt>Name</dt><dd>Jordan Hess</dd></div>
+                                    <div><dt>Based in</dt><dd>Cape Town</dd></div>
+                                    <div><dt>Age</dt><dd>23</dd></div>
+                                    <div><dt>Nationality</dt><dd>South African</dd></div>
+                                </dl>
+                                <a class="btn btn-red" href="/JordanHess-CV.pdf" download>Download CV</a>
                             </div>
-                            <div class="project-details">
-                                <h3>Financial Tracker</h3>
-                                <p>Built financial tracking application using Next.js, supabase and Claude.</p>
-                                <div class="project-links">
-                                    <a href="https://trackmymone.netlify.app/" target="_blank">View Project</a>
-                                    <a href="https://github.com/jordan-hess/financialtracker" target="_blank">GitHub</a>
+                        </section>
+
+                        <!-- Skills -->
+                        <section class="portfolio-section" id="skills">
+                            <h2>Technical skills</h2>
+                            <div class="skills">
+                                <div class="skill-row">
+                                    <h3>Languages</h3>
+                                    <ul class="chips"><li>JavaScript</li><li>TypeScript</li><li>HTML</li><li>CSS</li><li>Python</li><li>SQL</li></ul>
+                                </div>
+                                <div class="skill-row">
+                                    <h3>Frameworks &amp; libraries</h3>
+                                    <ul class="chips"><li>React</li><li>Next.js</li><li>Node.js</li><li>Three.js</li><li>Anime.js</li></ul>
+                                </div>
+                                <div class="skill-row">
+                                    <h3>Databases &amp; services</h3>
+                                    <ul class="chips"><li>PostgreSQL</li><li>Supabase</li></ul>
+                                </div>
+                                <div class="skill-row">
+                                    <h3>Tools</h3>
+                                    <ul class="chips"><li>VS Code</li><li>Git / GitHub / GitLab</li><li>Figma</li><li>Blender</li><li>Claude</li></ul>
                                 </div>
                             </div>
-                        </div>
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="/calculator.png" alt="Project 1">
+                        </section>
+
+                        <!-- Work experience -->
+                        <section class="portfolio-section" id="work-experience">
+                            <h2>Work experience</h2>
+                            <ol class="timeline">
+                                <li class="is-current">
+                                    <h3>Social Media Specialist</h3>
+                                    <p class="when"><strong>rain</strong> | Feb 2022 - Present</p>
+                                    <ul>
+                                        <li>Customer support, technical troubleshooting and business operations for a national mobile network.</li>
+                                        <li>Identify issues, understand user needs and find practical solutions, with a focus on process improvement.</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <h3>Intern</h3>
+                                    <p class="when"><strong>rain</strong> | Jan 2022 - Feb 2022</p>
+                                    <ul>
+                                        <li>Applied technical and software development skills in a business environment: system functionality, troubleshooting and understanding business requirements.</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <h3>Junior Web Developer Intern</h3>
+                                    <p class="when"><strong>LC Studio</strong> | Sep 2021 - Dec 2021</p>
+                                    <ul>
+                                        <li>Built solutions, worked through system requirements and troubleshot technical issues in a practical business setting.</li>
+                                        <li>Found that I have an eye for design, which made frontend development my passion.</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </section>
+
+                        <!-- Education -->
+                        <section class="portfolio-section" id="education">
+                            <h2>Education</h2>
+                            <ol class="timeline">
+                                <li>
+                                    <h3>Software Development Programme</h3>
+                                    <p class="when"><strong>Life Choices Coding Academy</strong> | Mar 2021 - Sep 2021</p>
+                                    <ul>
+                                        <li>Six months of intensive training in frontend and backend web development, databases, version control and core software principles, applied through practical projects.</li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <h3>High School Diploma</h3>
+                                    <p class="when"><strong>Groenvlei High School</strong> | 2016 - 2020</p>
+                                </li>
+                            </ol>
+                        </section>
+
+                        <!-- Projects -->
+                        <section class="portfolio-section" id="projects">
+                            <h2>Projects</h2>
+                            <div class="project-grid">
+                                <article class="project-card project-featured">
+                                    <div class="project-image">
+                                        <img src="/financial-tracker.webp" alt="Financial Tracker dashboard" width="1200" height="600" loading="lazy">
+                                    </div>
+                                    <div class="project-details">
+                                        <h3>Financial Tracker</h3>
+                                        <p>A personal finance tracking app for logging and reviewing spending.</p>
+                                        <ul class="chips chips-sm"><li>Next.js</li><li>Supabase</li><li>Claude</li></ul>
+                                        <div class="project-links">
+                                            <a class="btn btn-red" href="https://trackmymone.netlify.app/" target="_blank" rel="noopener">Live site</a>
+                                            <a class="btn btn-ghost" href="https://github.com/jordan-hess/financialtracker" target="_blank" rel="noopener">Code</a>
+                                        </div>
+                                    </div>
+                                </article>
+                                <article class="project-card">
+                                    <div class="project-image">
+                                        <img src="/tattoo-den.webp" alt="Tattoo Den booking website" width="1200" height="1130" loading="lazy">
+                                    </div>
+                                    <div class="project-details">
+                                        <h3>Tattoo Booking Site</h3>
+                                        <p>A responsive website for booking tattoo appointments.</p>
+                                        <ul class="chips chips-sm"><li>HTML</li><li>CSS</li><li>JavaScript</li></ul>
+                                        <div class="project-links">
+                                            <a class="btn btn-red" href="https://tattooden.netlify.app/" target="_blank" rel="noopener">Live site</a>
+                                            <a class="btn btn-ghost" href="https://github.com/jordan-hess/TattooDen" target="_blank" rel="noopener">Code</a>
+                                        </div>
+                                    </div>
+                                </article>
+                                <article class="project-card">
+                                    <div class="project-image">
+                                        <img src="/calculator.webp" alt="JavaScript calculator" width="543" height="602" loading="lazy">
+                                    </div>
+                                    <div class="project-details">
+                                        <h3>Calculator</h3>
+                                        <p>A simple calculator application.</p>
+                                        <ul class="chips chips-sm"><li>JavaScript</li><li>HTML</li><li>CSS</li></ul>
+                                        <div class="project-links">
+                                            <a class="btn btn-red" href="https://wizardly-allen-5f5018.netlify.app/" target="_blank" rel="noopener">Live site</a>
+                                            <a class="btn btn-ghost" href="https://github.com/jordan-hess/js-calculator" target="_blank" rel="noopener">Code</a>
+                                        </div>
+                                    </div>
+                                </article>
                             </div>
-                            <div class="project-details">
-                                <h3>Calculator</h3>
-                                <p>A simple calculator application built with Javascript, HTML & CSS.</p>
-                                <div class="project-links">
-                                    <a href="https://wizardly-allen-5f5018.netlify.app/" target="_blank">View Project</a>
-                                    <a href="https://github.com/jordan-hess/js-calculator" target="_blank">GitHub</a>
+                        </section>
+
+                        <!-- Contact -->
+                        <section class="portfolio-section" id="contact">
+                            <h2>Contact me</h2>
+                            <div class="contact">
+                                <dl class="contact-list">
+                                    <div><dt>Email</dt><dd><a href="mailto:jordanlcstudio@gmail.com">jordanlcstudio@gmail.com</a></dd></div>
+                                    <div><dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/therealjordanhess/" target="_blank" rel="noopener">therealjordanhess</a></dd></div>
+                                    <div><dt>GitHub</dt><dd><a href="https://github.com/jordan-hess" target="_blank" rel="noopener">jordan-hess</a></dd></div>
+                                    <div><dt>Instagram</dt><dd><a href="https://www.instagram.com/jordnhess/" target="_blank" rel="noopener">@jordnhess</a></dd></div>
+                                    <div><dt>Facebook</dt><dd>Jordan Hess</dd></div>
+                                </dl>
+                                <div class="contact-actions">
+                                    <a class="btn btn-red" href="mailto:jordanlcstudio@gmail.com">Email me</a>
+                                    <a class="btn btn-ghost" href="/JordanHess-CV.pdf" download>Download CV</a>
                                 </div>
                             </div>
-                        </div>
-                        <div class="project-card">
-                            <div class="project-image">
-                                <img src="/tat.png" alt="Project 2">
-                            </div>
-                            <div class="project-details">
-                                <h3>Tattoo Booking Site</h3>
-                                <p>A responsive website for booking tattoo appointments.</p>
-                                <div class="project-links">
-                                    <a href="https://tattooden.netlify.app/" target="_blank">View Project</a>
-                                    <a href="https://github.com/jordan-hess/TattooDen" target="_blank">GitHub</a>
-                                </div>
-                            </div>
-                        </div>
+                        </section>
                     </div>
-                </section>
-    
-                <!-- Contact Section -->
-                <section class="portfolio-section" id="contact">
-                    <h2>Contact Me</h2>
-                    <div class="contact-links">
-                        <div class="contact-item">
-                            <strong>Instagram:</strong> 
-                            <a href="https://www.instagram.com/jordnhess/" target="_blank">@jordnhess</a>
-                        </div>
-                        <div class="contact-item">
-                            <strong>Facebook:</strong> 
-                            Jordan Hess
-                        </div>
-                        <div class="contact-item">
-                            <strong>Email:</strong> 
-                            jchno116012003@gmail.com
-                        </div>
-                        <div class="contact-item">
-                            <strong>GitHub:</strong> 
-                            <a href="https://github.com/jordan-hess" target="_blank">jordan-hess</a>
-                        </div>
-                    </div>
-                </section>
+                </div>
+            </div>
+            <span class="monitor-led" aria-hidden="true"></span>
+        </div>
+    </div>
+
+    <!--Hobbies: the skateboard deck-->
+    <div id="hobbies-popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="deck-title">
+        <div class="deck panel">
+            <button id="hobbies-exit-button" class="popup-close" aria-label="Close">&times;</button>
+            <h2 id="deck-title">When I'm not coding</h2>
+            <div class="stickers">
+                <figure class="sticker" tabindex="0">
+                    <img src="/biking.webp" alt="Jordan biking" width="1200" height="554" loading="lazy">
+                    <figcaption>Biking</figcaption>
+                </figure>
+                <figure class="sticker" tabindex="0">
+                    <img src="/gym.webp" alt="Jordan at the gym" width="648" height="854" loading="lazy">
+                    <figcaption>Gym</figcaption>
+                </figure>
+                <figure class="sticker" tabindex="0">
+                    <img src="/music.webp" alt="Music" width="870" height="856" loading="lazy">
+                    <figcaption>Music</figcaption>
+                </figure>
+                <figure class="sticker" tabindex="0">
+                    <img src="/gaming.webp" alt="Gaming setup" width="1200" height="554" loading="lazy">
+                    <figcaption>Gaming</figcaption>
+                </figure>
             </div>
         </div>
     </div>
 
-    <!--Hobbies Popup (Skateboard)-->
-    <div id="hobbies-popup" class="popup hidden">
-        <div class="popup-content">
-            <button id="hobbies-exit-button" class="popup-close">&times;</button>
-            <div class="popup-body">
-                <section class="portfolio-section">
-                    <h2>Hobbies</h2>
-                    <div class="hobbies-grid">
-                        <div class="hobby-card">
-                            <div class="hobby-image"><img src="/IMG_4991.PNG" alt="biking"></div>
-                            <p class="hobby-title">Biking</p>
-                        </div>
-                        <div class="hobby-card">
-                            <div class="hobby-image"><img src="/gym.png" alt="Gym"></div>
-                            <p class="hobby-title">Gyming</p>
-                        </div>
-                        <div class="hobby-card">
-                            <div class="hobby-image"><img src="/music.png" alt="Music"></div>
-                            <p class="hobby-title">Music</p>
-                        </div>
-                        <div class="hobby-card">
-                            <div class="hobby-image"><img src="/IMG_3642.PNG" alt="Gaming"></div>
-                            <p class="hobby-title">Gaming</p>
-                        </div>
-                    </div>
-                </section>
+    <!--Mat: the doormat-->
+    <div id="mat-popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mat-title">
+        <div class="mat panel">
+            <button id="mat-exit-button" class="popup-close" aria-label="Close">&times;</button>
+            <h2 id="mat-title">Mi casa su casa</h2>
+            <p>Make yourself at home.</p>
+        </div>
+    </div>
+
+    <!--Story: the open book-->
+    <div id="story-popup" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="story-title">
+        <div class="book panel">
+            <button id="story-exit-button" class="popup-close" aria-label="Close">&times;</button>
+            <div class="page page-left">
+                <h2 id="story-title">My story</h2>
+                <p>How I went from Groenvlei High to Life Choices Academy, and why I'm still starving for this.</p>
+            </div>
+            <div class="page page-right">
+                <p>The full version is on my Life Choices profile. It opens in a new tab.</p>
+                <div class="book-actions">
+                    <button id="story-yes" class="btn btn-green">Read my story</button>
+                    <button id="story-no" class="btn btn-ghost-ink">Maybe later</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!--Mat Popup (Mi casa su casa)-->
-    <div id="mat-popup" class="welcome hidden">
-        <div class="welcome-content">
-            <button id="mat-exit-button" class="popup-close">&times;</button>
-            <div class="popup-body">
-                <h2>Mi casa su casa</h2>
-            </div>
-        </div>
-    </div>
-
-    <!--Story Popup (Book)-->
-    <div id="story-popup" class="popup hidden">
-        <div class="popup-content story-content">
-            <button id="story-exit-button" class="popup-close">&times;</button>
-            <div class="popup-body">
-                <section class="portfolio-section">
-                    <h2>My Story</h2>
-                    <p>Would you like to read more about my story?</p>
-                    <div class="story-buttons">
-                        <button id="story-yes" class="story-btn">Yes</button>
-                        <button id="story-no" class="story-btn story-btn-no">No</button>
-                    </div>
-                </section>
-            </div>
-        </div>
-    </div>
-
-    <!--Floating text (Mug + Chair)-->
-    <div id="float-text" class="float-text hidden">
+    <!--Floating text (small objects)-->
+    <div id="float-text" class="float-text hidden" role="status" aria-live="polite">
         <span id="float-text-content"></span>
     </div>
 
-    <!--Import Three.js-->
-    <script type="importmap">
-        {
-          "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@v0.149.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.149.0/examples/jsm/"
-          }
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <!--Main Script-->
@@ -399,7 +401,7 @@ body {
                 .add({ targets: '.dev',      translateX:  800, opacity: 0, duration: 600, easing: 'easeInQuart' }, '-=500')
                 .finished.then(() => {
                     document.querySelector('.logo').style.display = 'none';
-                    document.getElementById('welcome').classList.remove('hidden');
+                    window.showWelcome?.();
                 });
         };
     </script>

@@ -1,34 +1,152 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { drawPosterLogo, loadPosterFonts } from './posterLogo.js';
 
 // HTML elements
-const popup = document.getElementById('popup');
-const closePopupButton = document.getElementById('popup-exit-button');
-
-const loading = document.getElementById('loading');
-
-const welcome = document.getElementById('welcome');
-const closeWelcomeButton = document.getElementById('welcome-exit-button');
-
-const hobbiesPopup = document.getElementById('hobbies-popup');
-const closeHobbiesButton = document.getElementById('hobbies-exit-button');
-const matPopup = document.getElementById('mat-popup');
-const closeMatButton = document.getElementById('mat-exit-button');
-const storyPopup = document.getElementById('story-popup');
-const closeStoryButton = document.getElementById('story-exit-button');
-const floatText = document.getElementById('float-text');
-const floatTextContent = document.getElementById('float-text-content');
+const $ = (id) => document.getElementById(id);
+const popup = $('popup');
+const loading = $('loading');
+const progressBar = $('progress-bar');
+const progressLabel = $('progress-label');
+const welcome = $('welcome');
+const hobbiesPopup = $('hobbies-popup');
+const matPopup = $('mat-popup');
+const storyPopup = $('story-popup');
+const quickNav = $('quick-nav');
+const floatText = $('float-text');
+const floatTextContent = $('float-text-content');
 let floatTextTimeout = null;
 
 const allPopups = [welcome, popup, hobbiesPopup, matPopup, storyPopup];
+const isOpen = (p) => !p.classList.contains('hidden');
+const anyPopupOpen = () => allPopups.some(isOpen);
 
-function closeAllPopups() {
-    allPopups.forEach(p => p.classList.add('hidden'));
-    resetTyping();
+// ---------- Popups ----------
+let focusBeforePopup = null;
+let introPulseDone = false;
+
+function openPopup(el) {
+    closeAllPopups({ restoreFocus: false });
+    if (!focusBeforePopup) focusBeforePopup = document.activeElement;
+    el.classList.remove('hidden');
+    clearHover();
+    el.querySelector('.popup-close')?.focus({ preventScroll: true });
 }
 
-// Typing animation — cascade through all popup sections
+function closeAllPopups({ restoreFocus = true } = {}) {
+    const welcomeWasOpen = isOpen(welcome);
+    allPopups.forEach(p => p.classList.add('hidden'));
+    resetTyping();
+    if (restoreFocus) {
+        if (focusBeforePopup && document.contains(focusBeforePopup)) focusBeforePopup.focus?.({ preventScroll: true });
+        focusBeforePopup = null;
+    }
+    if (welcomeWasOpen && !introPulseDone) {
+        introPulseDone = true;
+        pulseKeyObjects();
+        revealPosterLogo();
+    }
+}
+
+function openPortfolio(sectionId) {
+    openPopup(popup);
+    if (sectionId) {
+        scrollToSection(sectionId, 'auto');
+    } else {
+        monitorContent.scrollTop = 0;
+        startTyping();
+    }
+}
+
+function scrollToSection(sectionId, behavior = 'smooth') {
+    resetTyping();
+    const tab = tabButtons.find(btn => btn.dataset.section === sectionId);
+    if (tab) {
+        spyLockedUntil = performance.now() + 1200;
+        setActiveTab(tab);
+    }
+    document.getElementById(sectionId)?.scrollIntoView({ behavior, block: 'start' });
+}
+
+// Called from index.html once the logo animation finishes
+window.showWelcome = () => {
+    openPopup(welcome);
+    quickNav.classList.remove('hidden');
+};
+
+// Close buttons, backdrop clicks and Escape
+allPopups.forEach(overlay => {
+    overlay.querySelector('.popup-close').addEventListener('click', () => closeAllPopups());
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeAllPopups();
+    });
+});
+$('welcome-go').addEventListener('click', () => closeAllPopups());
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && anyPopupOpen()) closeAllPopups();
+});
+
+$('story-yes').addEventListener('click', () => {
+    window.open('https://lifechoices.co.za/jordan-hess/', '_blank', 'noopener');
+    closeAllPopups();
+});
+$('story-no').addEventListener('click', () => closeAllPopups());
+
+// Section tabs inside the monitor, with the current section highlighted
+const monitorContent = popup.querySelector('.monitor-content');
+const tabButtons = [...popup.querySelectorAll('.popup-tabs button')];
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => scrollToSection(btn.dataset.section));
+});
+
+// While a tab-triggered scroll is running, keep that tab highlighted instead of
+// flicking through every section the scroll passes.
+let spyLockedUntil = 0;
+function setActiveTab(current) {
+    tabButtons.forEach(btn => {
+        btn.classList.toggle('is-active', btn === current);
+        if (btn === current) btn.setAttribute('aria-current', 'true');
+        else btn.removeAttribute('aria-current');
+    });
+    const strip = current.parentElement;
+    const left = current.offsetLeft; // .popup-tabs is position: relative
+    if (left < strip.scrollLeft || left + current.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+        strip.scrollLeft = left - 12;
+    }
+}
+
+function updateActiveTab() {
+    if (performance.now() < spyLockedUntil) return;
+    const top = monitorContent.scrollTop + 90;
+    const atBottom = monitorContent.scrollTop + monitorContent.clientHeight >= monitorContent.scrollHeight - 4;
+    let current = tabButtons[0];
+    for (const btn of tabButtons) {
+        const section = document.getElementById(btn.dataset.section);
+        if (section.offsetTop <= top) current = btn;
+    }
+    if (atBottom) current = tabButtons[tabButtons.length - 1];
+    if (!current.classList.contains('is-active')) setActiveTab(current);
+}
+monitorContent.addEventListener('scroll', updateActiveTab, { passive: true });
+monitorContent.addEventListener('scrollend', () => { spyLockedUntil = 0; });
+updateActiveTab();
+
+// Hotbar (outside the 3D scene). Number keys 1-4 work like a game hotbar.
+const hotbarSlots = [...quickNav.querySelectorAll('.slot')];
+quickNav.querySelectorAll('button[data-section]').forEach(btn => {
+    btn.addEventListener('click', () => openPortfolio(btn.dataset.section));
+});
+window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || anyPopupOpen() || quickNav.classList.contains('hidden')) return;
+    const slot = hotbarSlots[Number(e.key) - 1];
+    if (!slot) return;
+    slot.classList.add('is-pressed');
+    setTimeout(() => slot.classList.remove('is-pressed'), 150);
+    slot.click();
+});
+
+// ---------- Typing animation (cascades through all portfolio sections) ----------
 const sectionData = Array.from(document.querySelectorAll('#popup .portfolio-section')).map(section => ({
     h2: section.querySelector('h2'),
     text: section.querySelector('h2').textContent.trim(),
@@ -78,31 +196,25 @@ function resetTyping() {
     });
 }
 
-// Base three.js set up
+// ---------- Three.js setup ----------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xFFFFFF);
-const canvas = document.getElementById('portfolio-canvas');
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-};
+const canvas = $('portfolio-canvas');
+const sizes = { width: window.innerWidth, height: window.innerHeight };
 
-const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(sizes.width, sizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-
-const raycaster = new THREE.Raycaster();
-const mouseVec = new THREE.Vector2();
-let lastRaycastTime = 0;
-
-// Config renderer so things look better
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 
-// Load 3D model
+const raycaster = new THREE.Raycaster();
+const pointerVec = new THREE.Vector2();
+let lastRaycastTime = 0;
+
+// ---------- Interactive objects ----------
 const intersectObjects = [];
 const intersectObjectsNames = [
     "Portfolio",
@@ -123,75 +235,135 @@ const intersectObjectsNames = [
     "Skateboard",
     // Spin
     "Chair"
-]
+];
+const KEY_OBJECTS = ["Portfolio", "Skateboard", "Book", "Mat"];
+const GLOW_COLOR = new THREE.Color(0xF43535);
+const HOVER_INTENSITY = 0.35;
+
+// Walk up from a hit mesh to the interactive object it belongs to
+function findInteractive(obj) {
+    while (obj) {
+        if (obj.userData.interactive) return obj;
+        obj = obj.parent;
+    }
+    return null;
+}
+
+function setGlow(group, intensity) {
+    group.userData.glowMaterials?.forEach(mat => {
+        if (intensity > 0) {
+            mat.emissive.copy(GLOW_COLOR);
+            mat.emissiveIntensity = intensity;
+        } else {
+            mat.emissive.copy(mat.userData.baseEmissive);
+            mat.emissiveIntensity = mat.userData.baseEmissiveIntensity;
+        }
+    });
+}
+
+// Glow from the intro pulse, so hover doesn't fight with it
+const pulseLevels = new Map();
+let hovered = null;
+
+function setHover(group) {
+    if (group === hovered) return;
+    if (hovered) setGlow(hovered, pulseLevels.get(hovered) ?? 0);
+    hovered = group;
+    if (hovered) setGlow(hovered, HOVER_INTENSITY);
+    canvas.style.cursor = hovered ? 'pointer' : 'default';
+}
+function clearHover() { setHover(null); }
+
+function pulseKeyObjects() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    intersectObjects
+        .filter(o => KEY_OBJECTS.includes(o.name))
+        .forEach(group => {
+            const level = { v: 0 };
+            gsap.to(level, {
+                v: 0.55,
+                duration: 0.65,
+                repeat: 5,
+                yoyo: true,
+                ease: 'sine.inOut',
+                onUpdate: () => {
+                    pulseLevels.set(group, level.v);
+                    if (group !== hovered) setGlow(group, level.v);
+                },
+                onComplete: () => {
+                    pulseLevels.delete(group);
+                    if (group !== hovered) setGlow(group, 0);
+                }
+            });
+        });
+}
+
+// ---------- Load model ----------
+function setProgress(pct) {
+    progressBar.style.width = `${pct}%`;
+    progressLabel.textContent = `${Math.round(pct)}%`;
+}
 
 const loader = new GLTFLoader();
 loader.load(
     "/portfolio_room.glb",
-    function(glb){
+    function (glb) {
         const meshColors = {
             "Wall":       0x8892B0,  // light grey wall
-            // "Text001":  0xF43535, //HELLO WRLD TXT              
-            // "Text002_1":  0xc8c8c8,  // portfolio 
-            // "Cube018_1":  0x000000,  // TwitterX
-            "Table":     0x8892B0,  // light grey
-            "Mousepad":  0xF43535,  // Red
-            "Plane001":  0x171717,   // black top
-            "FloorPlanks":    0x8892B0,   // light grey floor
-            "Plane002":  0x171717,   // black floor
-            "Plane003" :  0x8892B0,   // BackWalls
-            "Drawer020": 0x8892B0,   // 
-            "Drawer021": 0x8892B0,   // 
-            "Drawer022": 0x8892B0,   //
-            "Drawer":   0x6c748b,   // 
-            "BookCactus": 0x6c748b,   //
-            "Plane028": 0x171717,
-            "Cube070": 0x171717,
-            "Cube070_1": 0x228B22,
-            "Cube060": 0x171717,
-            "Cube060_1": 0x000000,
-            "Cube060_2": 0x171717,
-            "Cube060_3": 0xF43535,
-            "Cube060_4": 0x6c748b, //books
-            "Cube060_5": 0xF43535,
-            "Cube060_6": 0xFFFFFF,
-            "Cube084_2": 0x000000,
-            "Cube084_1": 0xF43535,
-            "Cube084": 0xFFFFFF,
-            "Cube004": 0xFFFFFF, //cup
+            "Table":      0x8892B0,  // light grey
+            "Mousepad":   0xF43535,  // red
+            "Plane001":   0x171717,  // black top
+            "FloorPlanks":0x8892B0,  // light grey floor
+            "Plane002":   0x171717,  // black floor
+            "Plane003":   0x8892B0,  // back walls
+            "Drawer020":  0x8892B0,
+            "Drawer021":  0x8892B0,
+            "Drawer022":  0x8892B0,
+            "Drawer":     0x6c748b,
+            "BookCactus": 0x6c748b,
+            "Plane028":   0x171717,
+            "Cube070":    0x171717,
+            "Cube070_1":  0x228B22,
+            "Cube060":    0x171717,
+            "Cube060_1":  0x000000,
+            "Cube060_2":  0x171717,
+            "Cube060_3":  0xF43535,
+            "Cube060_4":  0x6c748b,  // books
+            "Cube060_5":  0xF43535,
+            "Cube060_6":  0xFFFFFF,
+            "Cube084_2":  0x000000,
+            "Cube084_1":  0xF43535,
+            "Cube084":    0xFFFFFF,
+            "Cube004":    0xFFFFFF,  // cup
             "Plane029_1": 0x171717,
-            "Plane029": 0xFFFFFF, //window
-            "Plane022": 0x171717,
+            "Plane029":   0xFFFFFF,  // window
+            "Plane022":   0x171717,
             "Plane022_1": 0xF43535,
             "Plane023_1": 0xF43535,
-            "Plane023": 0x171717,
-            "Cube073": 0x171717,
-            "Cube073_1": 0xF43535,
-            "Cube073_2": 0xFFFFFF, //backpack
-            "Cube048_1"  : 0x228B22, //book
-            "Cube048": 0x171717, //book pages
-            "Cube005_3": 0x171717,
-            "Cube005_1": 0x228B22,//green rubix
-            "Poster": 0xFFFFFF,
-            "Cube092_1": 0x228B22, //skateboard
-            "Cube093": 0xFFFFFF,
-            "Cube093_1": 0x171717,
-            "Cube006": 0xFFFFFF,
-            "Cube017_1": 0xFFFFFF,
-
-            
+            "Plane023":   0x171717,
+            "Cube073":    0x171717,
+            "Cube073_1":  0xF43535,
+            "Cube073_2":  0xFFFFFF,  // backpack
+            "Cube048_1":  0x228B22,  // book
+            "Cube048":    0x171717,  // book pages
+            "Cube005_3":  0x171717,
+            "Cube005_1":  0x228B22,  // green rubix
+            "Poster":     0xFFFFFF,
+            "Cube092_1":  0x228B22,  // skateboard
+            "Cube093":    0xFFFFFF,
+            "Cube093_1":  0x171717,
+            "Cube006":    0xFFFFFF,
+            "Cube017_1":  0xFFFFFF,
         };
-        console.log(intersectObjects);
+        const hidden = new Set(["Plane030", "Plane030_1", "Plane030_2", "Cube018", "Cube018_1"]);
 
         const hsl = {};
         glb.scene.traverse(child => {
             if (intersectObjectsNames.includes(child.name)) {
+                child.userData.interactive = true;
                 intersectObjects.push(child);
             }
-            if (child.name === "Plane030" || child.name === "Plane030_1" || child.name === "Plane030_2" ||
-                child.name === "Cube018" || child.name === "Cube018_1") {
-                child.visible = false;
-            }
+            if (hidden.has(child.name)) child.visible = false;
             if (!child.isMesh) return;
             child.castShadow = true;
             child.receiveShadow = true;
@@ -213,28 +385,111 @@ loader.load(
             }
         });
 
+        // Give each interactive object its own materials so glow doesn't leak onto shared ones
+        intersectObjects.forEach(group => {
+            const glowMaterials = [];
+            group.traverse(mesh => {
+                if (!mesh.isMesh) return;
+                const clone = (m) => {
+                    const c = m.clone();
+                    if (c.emissive) {
+                        c.userData.baseEmissive = c.emissive.clone();
+                        c.userData.baseEmissiveIntensity = c.emissiveIntensity;
+                        glowMaterials.push(c);
+                    }
+                    return c;
+                };
+                mesh.material = Array.isArray(mesh.material) ? mesh.material.map(clone) : clone(mesh.material);
+            });
+            group.userData.glowMaterials = glowMaterials;
+        });
+
         scene.add(glb.scene);
+        addPosterLogo(glb.scene);
         setupLights();
+        setProgress(100);
         loading.classList.add('hidden');
-        window.startLogoAnimation?.();
+        if (window.startLogoAnimation) window.startLogoAnimation();
+        else window.showWelcome();
     },
-    undefined,
-    function(error){
+    function (xhr) {
+        if (xhr.lengthComputable && xhr.total > 0) {
+            progressBar.parentElement.classList.remove('indeterminate');
+            setProgress((xhr.loaded / xhr.total) * 100);
+        } else {
+            progressBar.parentElement.classList.add('indeterminate');
+            progressLabel.textContent = `${(xhr.loaded / 1024).toFixed(0)} KB`;
+        }
+    },
+    function (error) {
         console.error(error);
+        loading.querySelector('h2').textContent = "Couldn't load the room";
+        loading.querySelector('p').textContent = 'Please refresh the page, or use the bar at the bottom of the screen.';
+        quickNav.classList.remove('hidden');
     }
 );
 
-// Set up lights
-function setupLights(){
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xB2BEB5, 0.3);
-    scene.add(ambientLight);
+// ---------- Wall poster: blank until the welcome closes, then the intro logo ----------
+// The model's "HELLO, WORLD." is 3D text geometry, so it's hidden as soon as the
+// room loads. A canvas-textured panel sits over the poster's front face (the face
+// pointing toward +x) and appears when revealPosterLogo() runs.
+const posterSwap = { panel: null, pending: false };
 
-    // Main/Sun light
+async function addPosterLogo(root) {
+    const oldText = root.getObjectByName('Text001') || root.getObjectByName('Text.001');
+    if (oldText) oldText.visible = false;
+
+    const poster = root.getObjectByName('Poster');
+    if (!poster) return;
+    const box = new THREE.Box3().setFromObject(poster);
+    const width = (box.max.z - box.min.z) * 0.94;
+    const height = (box.max.y - box.min.y) * 0.94;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = Math.round(1024 * (height / width));
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+    const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshStandardMaterial({ map: texture, transparent: true, roughness: 1 })
+    );
+    panel.rotation.y = Math.PI / 2; // face +x, toward the camera
+    panel.position.set(box.max.x + 0.004, (box.min.y + box.max.y) / 2, (box.min.z + box.max.z) / 2);
+    panel.receiveShadow = true;
+    panel.visible = false;
+    scene.add(panel);
+    posterSwap.panel = panel;
+    if (posterSwap.pending) revealPosterLogo();
+
+    // Canvas text needs the web fonts to be ready, or it falls back to system fonts
+    await loadPosterFonts();
+    drawPosterLogo(canvas);
+    texture.needsUpdate = true;
+}
+
+function revealPosterLogo() {
+    const { panel } = posterSwap;
+    if (!panel) { posterSwap.pending = true; return; }
+    posterSwap.pending = false;
+    if (panel.visible) return;
+    panel.visible = true;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    panel.material.opacity = 0;
+    panel.scale.setScalar(0.85);
+    gsap.to(panel.material, { opacity: 1, duration: 0.5, ease: 'power1.out' });
+    gsap.to(panel.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: 'back.out(2)' });
+}
+
+// ---------- Lights ----------
+function setupLights() {
+    scene.add(new THREE.AmbientLight(0xB2BEB5, 0.3));
+
     const sun = new THREE.DirectionalLight(0xffffd0, 1.5);
     sun.position.set(15, 25, 10);
     sun.castShadow = true;
-
     sun.shadow.camera.near = 0.1;
     sun.shadow.camera.far = 50;
     sun.shadow.camera.left = -10;
@@ -245,67 +500,57 @@ function setupLights(){
     sun.shadow.mapSize.width = shadowMapSize;
     sun.shadow.mapSize.height = shadowMapSize;
     sun.shadow.bias = -0.001;
-
     scene.add(sun);
 
-    // Secondary light
     const fillLight = new THREE.DirectionalLight(0xD3D3D3, 0.5);
     fillLight.position.set(-8, 12, 0);
     scene.add(fillLight);
 }
 
-// Set up camera and camera controls
-const camera = new THREE.PerspectiveCamera(
-    45,
-    sizes.width / sizes.height,
-    0.1,
-    1000
-);
+// ---------- Camera ----------
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 1000);
 const controls = new OrbitControls(camera, canvas);
-// no moving camera around
 controls.enablePan = false;
-// smoother movement
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-// limit camera rotation
-controls.minPolarAngle = Math.PI / 4; 
+controls.minPolarAngle = Math.PI / 4;
 controls.maxPolarAngle = Math.PI / 2;
 controls.minAzimuthAngle = 0;
 controls.maxAzimuthAngle = Math.PI / 2;
-// limit camera zooming
-controls.minDistance = 10; 
-controls.maxDistance = 30;
 
-camera.position.x = 14.7;
-camera.position.y = 8.2;
-camera.position.z = 6.1;
+controls.target.set(-1, 3, -1.5);
+camera.position.set(14.7, 8.2, 6.1);
 
-if(sizes.width < 800){
-    camera.position.x = 25;   
-    camera.position.y = 8;    
-    camera.position.z = 15;  
-    controls.maxDistance = 30;
+// Desktop framing is ~18 units away. The room is width-limited on portrait
+// screens, so move back just enough to keep most of it in view, accepting a
+// slight crop at the edges rather than leaving the room tiny.
+const BASE_DISTANCE = 18.2;
+function idealDistance(aspect) {
+    if (aspect >= 1.3) return BASE_DISTANCE;
+    return BASE_DISTANCE * Math.pow(1.3 / aspect, 0.5);
 }
 
-controls.target.set(-1, 3, -1.5); 
-controls.update();
+function frameCamera() {
+    const dist = idealDistance(sizes.width / sizes.height);
+    controls.minDistance = Math.min(10, dist * 0.6);
+    controls.maxDistance = Math.max(30, dist * 1.4);
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    camera.position.copy(controls.target).addScaledVector(dir, dist);
+    controls.update();
+}
+frameCamera();
 
-// GSAP Animations
+// ---------- GSAP animations ----------
 function jumpObject(object) {
+    if (gsap.isTweening(object.position)) return;
+    const y = object.position.y;
     gsap.timeline()
-        .to(object.position, { 
-            y: object.position.y+0.5, 
-            duration: 0.3, 
-            ease: "power2.out" 
-        })
-        .to(object.position, { 
-            y: object.position.y, 
-            duration: 0.3, 
-            ease: "bounce.out" 
-        });
+        .to(object.position, { y: y + 0.5, duration: 0.3, ease: "power2.out" })
+        .to(object.position, { y, duration: 0.3, ease: "bounce.out" });
 }
 
 function spinObject(object) {
+    if (gsap.isTweening(object.rotation)) return;
     gsap.to(object.rotation, {
         y: object.rotation.y + Math.PI * 2,
         duration: 1,
@@ -316,144 +561,91 @@ function spinObject(object) {
 function showFloatText(message) {
     floatTextContent.textContent = message;
     floatText.classList.remove('hidden');
-    floatText.getBoundingClientRect(); // force reflow so transition fires
+    floatText.getBoundingClientRect(); // force reflow so the transition fires
     floatText.classList.add('visible');
     clearTimeout(floatTextTimeout);
     floatTextTimeout = setTimeout(() => {
         floatText.classList.remove('visible');
-        setTimeout(() => floatText.classList.add('hidden'), 600);
+        floatTextTimeout = setTimeout(() => floatText.classList.add('hidden'), 600);
     }, 3000);
 }
 
-// Resize canvas responsively
-function onResize(){
+// ---------- Resize ----------
+function onResize() {
     sizes.width = window.innerWidth;
     sizes.height = window.innerHeight;
-    camera.aspect = sizes.width/sizes.height;
+    camera.aspect = sizes.width / sizes.height;
     camera.updateProjectionMatrix();
-
     renderer.setSize(sizes.width, sizes.height);
+    frameCamera();
 }
 window.addEventListener("resize", onResize);
 
-function onMouseMove(event) {
-    if (allPopups.some(p => !p.classList.contains('hidden'))) return;
+// ---------- Pointer interaction ----------
+function pickAt(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    pointerVec.set(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+    raycaster.setFromCamera(pointerVec, camera);
+    const hits = raycaster.intersectObjects(intersectObjects, true);
+    return hits.length ? findInteractive(hits[0].object) : null;
+}
+
+canvas.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse' || anyPopupOpen()) return;
     const now = performance.now();
     if (now - lastRaycastTime < 50) return;
     lastRaycastTime = now;
-    const rect = canvas.getBoundingClientRect();
-    mouseVec.set(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        -((event.clientY - rect.top) / rect.height) * 2 + 1
-    );
-    raycaster.setFromCamera(mouseVec, camera);
-    const hits = raycaster.intersectObjects(intersectObjects, true);
-    canvas.style.cursor = hits.length > 0 ? 'pointer' : 'default';
+    setHover(pickAt(event.clientX, event.clientY));
+});
+canvas.addEventListener('pointerleave', clearHover);
+
+// Treat a press as a click only if the pointer barely moved (so orbiting doesn't trigger objects)
+let pressStart = null;
+canvas.addEventListener('pointerdown', (e) => { pressStart = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', (e) => {
+    if (!pressStart) return;
+    const moved = Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y);
+    pressStart = null;
+    if (moved > 8 || anyPopupOpen()) return;
+    const hit = pickAt(e.clientX, e.clientY);
+    if (hit) handleObjectClick(hit);
+});
+
+const FLOAT_LINES = {
+    Mug: "if you clicked this I probably already had coffee",
+    Chair: "thats my spot.",
+    Backpack: "Couldn't think of a bag joke",
+    Can1: "Fuel for late-night debugging.",
+    Can2: "Fuel for late-night debugging.",
+    Can3: "Fuel for late-night debugging.",
+    Cactus: "The only plant I haven't killed.",
+    "Rubix Cube": "Still faster at CSS than solving this.",
+    Pokeball: "Gotta commit 'em all.",
+};
+const SPINNERS = new Set(["Chair", "Backpack"]);
+
+function handleObjectClick(hit) {
+    const name = hit.name;
+
+    if (name === "Portfolio") return openPortfolio();
+    if (name === "Github") return window.open('https://github.com/jordan-hess', '_blank', 'noopener');
+
+    if (SPINNERS.has(name)) spinObject(hit);
+    else jumpObject(hit);
+
+    if (name === "Skateboard") openPopup(hobbiesPopup);
+    else if (name === "Mat") openPopup(matPopup);
+    else if (name === "Book") openPopup(storyPopup);
+    else if (FLOAT_LINES[name]) showFloatText(FLOAT_LINES[name]);
 }
-window.addEventListener('pointermove', onMouseMove);
 
-// Interact with 3D objects
-function onClick(event){
-   if (allPopups.some(p => !p.classList.contains('hidden'))) return;
-
-   event.preventDefault();
-
-   const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-   const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-
-   const rect = canvas.getBoundingClientRect();
-   mouseVec.set(
-       ((clientX - rect.left) / rect.width) * 2 - 1,
-       -((clientY - rect.top) / rect.height) * 2 + 1
-   );
-   raycaster.setFromCamera(mouseVec, camera);
-
-   const intersects = raycaster.intersectObjects(intersectObjects, true);
-   if (intersects.length === 0) return;
-
-   const hit = intersects[0].object.parent;
-   const name = hit.name;
-
-   if (name === "Portfolio") {
-       closeAllPopups();
-       popup.classList.remove('hidden');
-       startTyping();
-   } else if (name === "Github") {
-       window.open('https://github.com/jordan-hess', '_blank');
-   } else if (name === "Instagram") {
-       window.open('https://www.instagram.com/jordnhess/', '_blank');
-   } else if (name === "Skateboard") {
-       jumpObject(hit);
-       closeAllPopups();
-       hobbiesPopup.classList.remove('hidden');
-   } else if (name === "Mug") {
-       jumpObject(hit);
-       showFloatText("if you clicked this I probably already had coffee");
-   } else if (name === "Mat") {
-       jumpObject(hit);
-       closeAllPopups();
-       matPopup.classList.remove('hidden');
-   } else if (name === "Book") {
-       jumpObject(hit);
-       closeAllPopups();
-       storyPopup.classList.remove('hidden');
-   } else if (name === "Chair") {
-       spinObject(hit);
-       showFloatText("thats my spot.");
-   } else if (name === "Backpack") {
-       spinObject(hit);
-       showFloatText("Couldn't think of a bag joke");
-   } else {
-       jumpObject(hit);
-   }
-}
-window.addEventListener("pointerdown", onClick);
-
-closePopupButton.addEventListener("click", () => {
-    popup.classList.add('hidden');
-    resetTyping();
-});
-
-closeWelcomeButton.addEventListener("click", () => {
-    welcome.classList.add('hidden');
-});
-
-closeHobbiesButton.addEventListener("click", () => {
-    hobbiesPopup.classList.add('hidden');
-});
-
-closeMatButton.addEventListener("click", () => {
-    matPopup.classList.add('hidden');
-});
-
-closeStoryButton.addEventListener("click", () => {
-    storyPopup.classList.add('hidden');
-});
-
-document.getElementById('story-yes').addEventListener("click", () => {
-    window.open('https://lifechoices.co.za/jordan-hess/', '_blank');
-    storyPopup.classList.add('hidden');
-});
-
-document.getElementById('story-no').addEventListener("click", () => {
-    storyPopup.classList.add('hidden');
-});
-
-// Click outside any popup overlay to close it
-[welcome, popup, hobbiesPopup, matPopup, storyPopup].forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            if (overlay === popup) resetTyping();
-            overlay.classList.add('hidden');
-        }
-    });
-});
-
-// Animation Loop
-function animate(){
-    controls.update(); 
+// ---------- Render loop ----------
+function animate() {
+    controls.update();
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
 }
 animate();
-
